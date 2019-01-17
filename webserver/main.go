@@ -4,9 +4,18 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	_ "./statik"
+	"github.com/rakyll/statik/fs"
 )
 
 func main() {
+
+	statikFS, err := fs.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(statikFS)))
 
 	// main page handler
 	http.HandleFunc("/", handler)

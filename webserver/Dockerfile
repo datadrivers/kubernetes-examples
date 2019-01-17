@@ -1,7 +1,9 @@
 FROM golang:latest as build
 
-RUN go get github.com/datadrivers/kubernetes-examples/webserver
 WORKDIR /go/src/github.com/datadrivers/kubernetes-examples/webserver
+RUN go get github.com/datadrivers/kubernetes-examples/webserver
+RUN go get github.com/rakyll/statik
+RUN statik -src=resources
 RUN go build -o simple_webserver
 
 
