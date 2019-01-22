@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	_ "./statik"
+	_ "github.com/datadrivers/kubernetes-examples/webserver/statik"
 	"github.com/rakyll/statik/fs"
 )
 
