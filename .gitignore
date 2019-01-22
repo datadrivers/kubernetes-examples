@@ -13,3 +13,6 @@
 
 # IntelliJ settings
 .idea/
+
+# Project binary
+simple_webserver
