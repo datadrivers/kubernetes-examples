@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -20,6 +21,7 @@ func main() {
 
 	// main page handlers
 	http.HandleFunc("/env/", EnvHandler)
+	http.HandleFunc("/secret/", SecretHandler)
 	http.HandleFunc("/", HomeHandler)
 	http.HandleFunc("/crash", CrashHandler)
 
@@ -40,6 +42,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 // This can be used to show the behaviour when running inside a
 // Kubernetes Pod.
 func CrashHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("URL called: %s\n", r.URL.Path[1:])
 	w.WriteHeader(http.StatusInternalServerError)
 	log.Fatal("Crash handler has been called!")
 }
@@ -59,4 +62,31 @@ func EnvHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "No environment key found for %s\n", key)
 	}
+}
+
+// The SecretHandler will try to read a file from the system. Purpose
+// is to demonstrate the usage of SecretMaps and the mounting of keys
+// as files into the filesystem of a Pod.
+func SecretHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("URL called: %s\n", r.URL.Path[1:])
+
+	path := "/etc/secrets/"
+	key := r.URL.Path[8:]
+	file := path+key
+
+	if _, err := os.Stat(file); !os.IsNotExist(err) {
+		data, err := ioutil.ReadFile(file)
+		if err != nil {
+			fmt.Fprintf(w, "An error occourred reading the specified file: %s\n", file)
+			http.Error(w, err.Error(), 500)
+		}
+
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "Value of file: %s\n", file)
+		fmt.Fprintf(w, string(data))
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "No secret found for key: %s\n", file)
+	}
+
 }
