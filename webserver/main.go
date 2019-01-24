@@ -25,6 +25,9 @@ func main() {
 	http.HandleFunc("/", HomeHandler)
 	http.HandleFunc("/crash", CrashHandler)
 
+	// log ready message
+	log.Println("Webserver started")
+
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
