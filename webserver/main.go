@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	_ "github.com/datadrivers/kubernetes-examples/webserver/statik"
@@ -24,6 +25,7 @@ func main() {
 	http.HandleFunc("/env/", EnvHandler)
 	http.HandleFunc("/env_all", EnvFullHandler)
 	http.HandleFunc("/secret/", SecretHandler)
+	http.HandleFunc("/secret_all/", SecretFullHandler)
 	http.HandleFunc("/", HomeHandler)
 	http.HandleFunc("/crash", CrashHandler)
 
@@ -107,4 +109,27 @@ func SecretHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "No secret found for key: %s\n", file)
 	}
 
+}
+
+// This is the special case of the above SecretHandler, we will use
+// a WalkFunc to list all files in the secret's mount path
+func SecretFullHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("URL called: %s\n", r.URL.Path[1:])
+	var files []string
+
+	root := "/etc/secrets/"
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		files = append(files, path)
+		return nil
+	})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "An error occurred!\n")
+		fmt.Fprintf(w, err.Error())
+	}
+
+	w.WriteHeader(http.StatusOK)
+	for _, file := range files {
+		fmt.Fprintln(w, file)
+	}
 }
