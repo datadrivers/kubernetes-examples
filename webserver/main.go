@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	_ "github.com/datadrivers/kubernetes-examples/webserver/statik"
 	"github.com/rakyll/statik/fs"
@@ -21,6 +22,7 @@ func main() {
 
 	// main page handlers
 	http.HandleFunc("/env/", EnvHandler)
+	http.HandleFunc("/env_all", EnvFullHandler)
 	http.HandleFunc("/secret/", SecretHandler)
 	http.HandleFunc("/", HomeHandler)
 	http.HandleFunc("/crash", CrashHandler)
@@ -64,6 +66,19 @@ func EnvHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "No environment key found for %s\n", key)
+	}
+}
+
+// This is a special case of the Environment Handler, it will iterate
+// over all environment variables.
+func EnvFullHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("URL called: %s\n", r.URL.Path[1:])
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "List of all environment variables:\n")
+	for _, e := range os.Environ() {
+		pair := strings.Split(e, "=")
+		fmt.Fprintf(w, "%s - %s \n", pair[0], pair[1])
 	}
 }
 
